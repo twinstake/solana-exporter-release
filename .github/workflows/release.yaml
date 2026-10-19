@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  # Upstream tag to build and publish. Bumping it is the whole release process.
+  # https://github.com/asymmetric-research/solana-exporter/tags
+  UPSTREAM_TAG: v3.2.0
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+    steps:
+      - id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$UPSTREAM_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "$UPSTREAM_TAG is already released"
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    needs: check
+    if: needs.check.outputs.released != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: asymmetric-research/solana-exporter
+          ref: ${{ env.UPSTREAM_TAG }}
+          path: upstream
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: upstream/go.mod
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          workdir: upstream
+          args: release --clean --config ../.goreleaser.yaml
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

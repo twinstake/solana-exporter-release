@@ -43,4 +43,6 @@ release:
   make_latest: true
   header: >-
     Built unmodified from
-    [asymmetric-research/solana-exporter {{ .Tag }}](https://github.com/asymmetric-research/solana-exporter/releases/tag/{{ .Tag }}).
+    [asymmetric-research/solana-exporter {{ .Tag }}](https://github.com/asymmetric-research/solana-exporter/releases/tag/{{ .Tag }})
+    at commit
+    [{{ .FullCommit }}](https://github.com/asymmetric-research/solana-exporter/commit/{{ .FullCommit }}).

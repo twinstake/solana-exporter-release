@@ -1,0 +1,48 @@
+version: 2
+
+# Runs from the upstream checkout (the workflow's workdir), so paths here are
+# relative to it. dist sits outside it to keep that checkout clean.
+project_name: solana-exporter
+dist: ../dist
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: solana-exporter
+    main: ./cmd/solana-exporter
+    binary: solana-exporter
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: solana-exporter
+    formats: [tar.gz]
+    name_template: >-
+      {{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  disable: true
+
+release:
+  # Publish here, not to the upstream origin the source was cloned from. The
+  # upstream commit does not exist in this repo, so tag our own commit instead.
+  github:
+    owner: twinstake
+    name: solana-exporter-release
+  target_commitish: "{{ .Env.GITHUB_SHA }}"
+  make_latest: true
+  header: >-
+    Built unmodified from
+    [asymmetric-research/solana-exporter {{ .Tag }}](https://github.com/asymmetric-research/solana-exporter/releases/tag/{{ .Tag }})
+    at commit
+    [{{ .FullCommit }}](https://github.com/asymmetric-research/solana-exporter/commit/{{ .FullCommit }}).
